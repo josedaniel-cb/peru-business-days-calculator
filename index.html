@@ -4,79 +4,84 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Peru Business Days Calculator</title>
+
+    <!-- Vue 3 -->
     <script src="https://unpkg.com/vue@3.2.47/dist/vue.global.js"></script>
+
+    <!-- Vuetify 3 -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/vuetify@3.1.6/dist/vuetify.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@3.1.6/dist/vuetify.min.js"></script>
+
+    <!-- Pyodide -->
     <script src="https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js"></script>
-    <script>
-      let pyodideInstance = null;
 
-      async function loadPyodideAndPackages() {
-        if (!pyodideInstance) {
-          pyodideInstance = await loadPyodide({
-            indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.2/full/",
-          });
-          await pyodideInstance.loadPackage("micropip");
-          await pyodideInstance.runPythonAsync(`
-            from datetime import datetime, timedelta
-
-            # Definir los feriados
-            feriados = [
-                "01/01/2024","02/01/2024","28/03/2024","29/03/2024","01/05/2024","29/06/2024","07/06/2024","23/07/2024","26/07/2024","28/07/2024",
-                "29/07/2024","06/08/2024","30/08/2024","07/10/2024","07/10/2024","08/10/2024","01/11/2024","06/12/2024","08/12/2024","09/12/2024",
-                "23/12/2024","24/12/2024","25/12/2024","30/12/2024","31/12/2024","01/01/2023","02/01/2023","06/04/2023","07/04/2023","01/05/2023",
-                "29/06/2023","30/06/2023","06/08/2023","23/07/2023","27/07/2023","28/07/2023","29/07/2023","30/08/2023","08/10/2023","09/10/2023",
-                "01/11/2023","07/12/2023","08/12/2023","09/12/2023","25/12/2023","26/12/2023"
-            ]
-
-            # Convertir los feriados al formato datetime
-            feriados = [datetime.strptime(date, "%d/%m/%Y") for date in feriados]
-
-            # Función para calcular días hábiles
-            def calcular_dias_habiles(fecha_inicio, fecha_fin, feriados):
-                dias_habiles = 0
-                fecha_actual = fecha_inicio
-
-                while fecha_actual <= fecha_fin:
-                    # Verificar si no es fin de semana y no es feriado
-                    if fecha_actual.weekday() < 5 and fecha_actual not in feriados:
-                        dias_habiles += 1
-                    fecha_actual += timedelta(days=1)
-
-                return dias_habiles
-          `);
-        }
-        return pyodideInstance;
+    <style>
+      body {
+        font-family: "Roboto", sans-serif;
       }
-
-      async function calcularDiasHabiles(startDate, endDate) {
-        let pyodide = await loadPyodideAndPackages();
-
-        if (startDate && endDate) {
-          let result = await pyodide.runPythonAsync(`
-            from datetime import datetime, timedelta
-
-            fecha_inicio = datetime.strptime("${startDate}", "%Y-%m-%d") + timedelta(days=1)
-            fecha_fin = datetime.strptime("${endDate}", "%Y-%m-%d")
-            dias_habiles = calcular_dias_habiles(fecha_inicio, fecha_fin, feriados)
-            dias_habiles
-          `);
-          return result;
-        }
-        return null;
+      #app {
+        max-width: 600px;
+        margin: 50px auto;
       }
-    </script>
+    </style>
   </head>
   <body>
     <div id="app">
-      <form @input="handleInput">
-        <label for="start-date">Fecha Inicio:</label>
-        <input type="date" id="start-date" v-model="startDate" required />
+      <v-app>
+        <v-container>
+          <v-card class="pa-4" elevation="2">
+            <v-card-title>
+              <h3>Peru Business Days Calculator</h3>
+            </v-card-title>
 
-        <label for="end-date">Fecha Fin:</label>
-        <input type="date" id="end-date" v-model="endDate" required />
+            <v-card-text>
+              <v-form @input="handleInput">
+                <v-row>
+                  <v-col>
+                    <v-text-field
+                      v-model="startDate"
+                      label="Fecha Inicio"
+                      type="date"
+                      required
+                    ></v-text-field>
+                  </v-col>
+                  <v-col>
+                    <v-text-field
+                      v-model="endDate"
+                      label="Fecha Fin"
+                      type="date"
+                      required
+                    ></v-text-field>
+                  </v-col>
+                </v-row>
 
-        <label for="result">Resultado:</label>
-        <input type="text" id="result" v-model="businessDays" disabled />
-      </form>
+                <v-row>
+                  <v-col>
+                    <v-text-field
+                      v-model="businessDays"
+                      label="Resultado"
+                      disabled
+                    ></v-text-field>
+                  </v-col>
+                </v-row>
+              </v-form>
+
+              <v-row justify="center" class="mt-4">
+                <v-progress-circular
+                  v-if="loading"
+                  :size="40"
+                  :width="4"
+                  indeterminate
+                  color="primary"
+                ></v-progress-circular>
+              </v-row>
+            </v-card-text>
+          </v-card>
+        </v-container>
+      </v-app>
     </div>
 
     <script>
@@ -86,20 +91,89 @@
             startDate: "",
             endDate: "",
             businessDays: "",
+            loading: false,
+            pyodideInstance: null,
           };
         },
+        async mounted() {
+          // Cargar Pyodide al montar el componente
+          this.loading = true;
+          this.pyodideInstance = await this.loadPyodideAndPackages();
+          this.loading = false; // Desactivar el spinner una vez Pyodide esté listo
+        },
         methods: {
+          async loadPyodideAndPackages() {
+            // Asegurarnos de que Pyodide está disponible antes de usarlo
+            if (typeof loadPyodide === "undefined") {
+              throw new Error("Pyodide no está disponible.");
+            }
+
+            // Cargar Pyodide y los paquetes necesarios
+            let pyodide = await loadPyodide({
+              indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.2/full/",
+            });
+            await pyodide.loadPackage("micropip");
+            await pyodide.runPythonAsync(`
+              from datetime import datetime, timedelta
+
+              # Definir los feriados
+              feriados = [
+                  "01/01/2024","02/01/2024","28/03/2024","29/03/2024","01/05/2024","29/06/2024","07/06/2024","23/07/2024","26/07/2024","28/07/2024",
+                  "29/07/2024","06/08/2024","30/08/2024","07/10/2024","07/10/2024","08/10/2024","01/11/2024","06/12/2024","08/12/2024","09/12/2024",
+                  "23/12/2024","24/12/2024","25/12/2024","30/12/2024","31/12/2024","01/01/2023","02/01/2023","06/04/2023","07/04/2023","01/05/2023",
+                  "29/06/2023","30/06/2023","06/08/2023","23/07/2023","27/07/2023","28/07/2023","29/07/2023","30/08/2023","08/10/2023","09/10/2023",
+                  "01/11/2023","07/12/2023","08/12/2023","09/12/2023","25/12/2023","26/12/2023"
+              ]
+
+              # Convertir los feriados al formato datetime
+              feriados = [datetime.strptime(date, "%d/%m/%Y") for date in feriados]
+
+              # Función para calcular días hábiles
+              def calcular_dias_habiles(fecha_inicio, fecha_fin, feriados):
+                  dias_habiles = 0
+                  fecha_actual = fecha_inicio
+
+                  while fecha_actual <= fecha_fin:
+                      # Verificar si no es fin de semana y no es feriado
+                      if fecha_actual.weekday() < 5 and fecha_actual not in feriados:
+                          dias_habiles += 1
+                      fecha_actual += timedelta(days=1)
+
+                  return dias_habiles
+            `);
+            return pyodide;
+          },
+          async calcularDiasHabiles(startDate, endDate) {
+            if (!this.pyodideInstance) return null;
+
+            if (startDate && endDate) {
+              let result = await this.pyodideInstance.runPythonAsync(`
+                from datetime import datetime, timedelta
+
+                fecha_inicio = datetime.strptime("${startDate}", "%Y-%m-%d") + timedelta(days=1)
+                fecha_fin = datetime.strptime("${endDate}", "%Y-%m-%d")
+                dias_habiles = calcular_dias_habiles(fecha_inicio, fecha_fin, feriados)
+                dias_habiles
+              `);
+              return result;
+            }
+            return null;
+          },
           async handleInput() {
             if (this.startDate && this.endDate) {
-              const result = await calcularDiasHabiles(
+              this.loading = true; // Mostrar spinner durante el cálculo
+              const result = await this.calcularDiasHabiles(
                 this.startDate,
                 this.endDate
               );
               this.businessDays = result;
+              this.loading = false; // Ocultar spinner al terminar
             }
           },
         },
       });
+
+      app.use(Vuetify.createVuetify());
 
       app.mount("#app");
     </script>
