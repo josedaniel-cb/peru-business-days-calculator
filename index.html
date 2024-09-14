@@ -38,7 +38,16 @@
             </v-card-title>
 
             <v-card-text>
-              {{ dateRange }}
+              <v-alert
+                v-if="errorMessage"
+                type="error"
+                dismissible
+                @click="errorMessage = ''"
+              >
+                {{ errorMessage }}
+              </v-alert>
+
+              <!-- Date Picker and Result -->
               <v-form>
                 <v-date-picker
                   v-model="dateRange"
@@ -50,6 +59,7 @@
                   color="primary"
                   locale="es"
                   multiple="range"
+                  :disabled="loading || pyodideLoading"
                   @update:model-value="handleInput"
                 ></v-date-picker>
 
@@ -63,7 +73,33 @@
                 ></v-text-field>
               </v-form>
 
-              <!-- Mostrar mensaje más bonito y explícito de cargando -->
+              <!-- Buttons: Show Feriados and Clear History -->
+              <v-btn
+                color="primary"
+                @click="showFeriadosDialog = true"
+                :disabled="loading || pyodideLoading"
+              >
+                Ver Feriados Considerados
+              </v-btn>
+
+              <v-btn color="error" @click="clearHistory">
+                Limpiar Historial
+              </v-btn>
+
+              <!-- Pyodide loader -->
+              <v-progress-circular
+                v-if="pyodideLoading"
+                :size="40"
+                :width="4"
+                indeterminate
+                color="primary"
+                class="d-block mx-auto mt-4"
+              ></v-progress-circular>
+              <span v-if="pyodideLoading" class="loading-message">
+                Cargando Pyodide, por favor espera...
+              </span>
+
+              <!-- Calculation loader -->
               <v-progress-circular
                 v-if="loading"
                 :size="40"
@@ -75,9 +111,32 @@
               <span v-if="loading" class="loading-message">
                 Calculando días hábiles, por favor espera...
               </span>
+
+              <!-- History Table -->
+              <v-card-title>
+                <h4>Historial de Cálculos</h4>
+              </v-card-title>
+              <v-data-table
+                :headers="headers"
+                :items="history"
+                :items-per-page="5"
+                class="elevation-1"
+              ></v-data-table>
             </v-card-text>
           </v-card>
         </v-container>
+
+        <!-- Dialog for Feriados -->
+        <v-dialog v-model="showFeriadosDialog" max-width="500px">
+          <v-card>
+            <v-card-title>Feriados Considerados</v-card-title>
+            <v-card-text>{{ feriados }}</v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn text @click="showFeriadosDialog = false">Cerrar</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
       </v-app>
     </div>
 

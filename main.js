@@ -4,23 +4,71 @@ const app = Vue.createApp({
       dateRange: [],
       businessDays: "",
       loading: false,
+      pyodideLoading: false,
       pyodideInstance: null,
+      errorMessage: "",
+      feriadosAlert: false,
+      showFeriadosDialog: false, // Controls dialog visibility
+
+      feriadosList: "",
+      history: [],
+      headers: [
+        { text: "Fecha de Inicio", value: "startDate" },
+        { text: "Fecha de Fin", value: "endDate" },
+        { text: "Días Hábiles", value: "businessDays" },
+      ],
+      feriados: [
+        "01/01/2024",
+        "02/01/2024",
+        "28/03/2024",
+        "29/03/2024",
+        "01/05/2024",
+        "29/06/2024",
+        "07/06/2024",
+        "23/07/2024",
+        "26/07/2024",
+        "28/07/2024",
+        "29/07/2024",
+        "06/08/2024",
+        "30/08/2024",
+        "07/10/2024",
+        "07/10/2024",
+        "08/10/2024",
+        "01/11/2024",
+        "06/12/2024",
+        "08/12/2024",
+        "09/12/2024",
+        "23/12/2024",
+        "24/12/2024",
+        "25/12/2024",
+        "30/12/2024",
+        "31/12/2024",
+      ],
     };
   },
   async mounted() {
-    // Cargar Pyodide al montar el componente
-    this.loading = true;
-    this.pyodideInstance = await this.loadPyodideAndPackages();
-    this.loading = false; // Desactivar el spinner una vez Pyodide esté listo
+    // Load the history from localStorage
+    const storedHistory = localStorage.getItem("history");
+    if (storedHistory) {
+      this.history = JSON.parse(storedHistory);
+    }
+
+    // Load Pyodide
+    this.pyodideLoading = true;
+    try {
+      this.pyodideInstance = await this.loadPyodideAndPackages();
+    } catch (error) {
+      console.error(error);
+      this.errorMessage = "Error cargando Pyodide: " + error.message;
+    }
+    this.pyodideLoading = false;
   },
   methods: {
     async loadPyodideAndPackages() {
-      // Asegurarnos de que Pyodide está disponible antes de usarlo
       if (typeof loadPyodide === "undefined") {
         throw new Error("Pyodide no está disponible.");
       }
 
-      // Cargar Pyodide y los paquetes necesarios
       let pyodide = await loadPyodide({
         indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.2/full/",
       });
@@ -50,7 +98,6 @@ const app = Vue.createApp({
                       if fecha_actual.weekday() < 5 and fecha_actual not in feriados:
                           dias_habiles += 1
                       fecha_actual += timedelta(days=1)
-  
                   return dias_habiles
             `);
       return pyodide;
@@ -58,35 +105,50 @@ const app = Vue.createApp({
     async calcularDiasHabiles(startDate, endDate) {
       if (!this.pyodideInstance) return null;
 
-      if (startDate && endDate) {
-        // Remove the time component from the date strings
-        const formattedStartDate = startDate.toISOString().split("T")[0];
-        const formattedEndDate = endDate.toISOString().split("T")[0];
+      const formattedStartDate = startDate.toISOString().split("T")[0];
+      const formattedEndDate = endDate.toISOString().split("T")[0];
 
-        let result = await this.pyodideInstance.runPythonAsync(`
+      let result = await this.pyodideInstance.runPythonAsync(`
                 from datetime import datetime, timedelta
 
                 fecha_inicio = datetime.strptime("${formattedStartDate}", "%Y-%m-%d") + timedelta(days=1)
                 fecha_fin = datetime.strptime("${formattedEndDate}", "%Y-%m-%d")
                 dias_habiles = calcular_dias_habiles(fecha_inicio, fecha_fin, feriados)
                 dias_habiles
-              `);
-        return result;
-      }
-      return null;
+        `);
+      return result;
     },
     async handleInput() {
-      console.log("Date range changed:", this.dateRange);
-      // if (this.dateRange && this.dateRange.length === 2) {
       if (this.dateRange.length > 0) {
         const startDate = this.dateRange[0];
         const endDate = this.dateRange[this.dateRange.length - 1];
 
-        this.loading = true; // Mostrar spinner durante el cálculo
-        const result = await this.calcularDiasHabiles(startDate, endDate);
-        this.businessDays = result;
-        this.loading = false; // Ocultar spinner al terminar
+        this.loading = true;
+        try {
+          const result = await this.calcularDiasHabiles(startDate, endDate);
+          this.businessDays = result;
+
+          // Save result to history and localStorage
+          this.history.push({
+            startDate: startDate.toISOString().split("T")[0],
+            endDate: endDate.toISOString().split("T")[0],
+            businessDays: result,
+          });
+          localStorage.setItem("history", JSON.stringify(this.history));
+        } catch (error) {
+          console.error(error);
+          this.errorMessage = "Error en el cálculo: " + error.message;
+        }
+        this.loading = false;
       }
+    },
+    showFeriados() {
+      this.feriadosAlert = true;
+      this.feriadosList = "Feriados considerados: " + this.feriados.join(", ");
+    },
+    clearHistory() {
+      this.history = [];
+      localStorage.removeItem("history");
     },
   },
 });
@@ -101,7 +163,6 @@ app.use(
         },
       },
     },
-    // Añadir configuración de internacionalización
     locale: {
       defaultLocale: "es",
       messages: {
