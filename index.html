@@ -10,10 +10,10 @@
 
     <!-- Vuetify 3 -->
     <link
-      href="https://cdn.jsdelivr.net/npm/vuetify@3.1.6/dist/vuetify.min.css"
+      href="https://cdn.jsdelivr.net/npm/vuetify@3.7.1/dist/vuetify.min.css"
       rel="stylesheet"
     />
-    <script src="https://cdn.jsdelivr.net/npm/vuetify@3.1.6/dist/vuetify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@3.7.1/dist/vuetify.min.js"></script>
 
     <!-- Pyodide -->
     <script src="https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js"></script>
@@ -38,58 +38,64 @@
             </v-card-title>
 
             <v-card-text>
-              <v-form @input="handleInput">
-                <v-row>
-                  <v-col>
-                    <v-text-field
-                      v-model="startDate"
-                      label="Fecha Inicio"
-                      type="date"
-                      required
-                    ></v-text-field>
-                  </v-col>
-                  <v-col>
-                    <v-text-field
-                      v-model="endDate"
-                      label="Fecha Fin"
-                      type="date"
-                      required
-                    ></v-text-field>
-                  </v-col>
-                </v-row>
+              {{ dateRange }}
+              <v-form>
+                <v-date-picker
+                  v-model="dateRange"
+                  label="Selecciona el rango de fechas"
+                  density="compact"
+                  variant="outlined"
+                  range
+                  required
+                  color="primary"
+                  locale="es"
+                  multiple="range"
+                  @update:model-value="handleInput"
+                ></v-date-picker>
 
-                <v-row>
-                  <v-col>
-                    <v-text-field
-                      v-model="businessDays"
-                      label="Resultado"
-                      disabled
-                    ></v-text-field>
-                  </v-col>
-                </v-row>
+                <v-text-field
+                  v-model="businessDays"
+                  label="Resultado"
+                  readonly
+                  density="compact"
+                  variant="outlined"
+                  color="primary"
+                ></v-text-field>
               </v-form>
 
-              <v-row justify="center" class="mt-4">
-                <v-progress-circular
-                  v-if="loading"
-                  :size="40"
-                  :width="4"
-                  indeterminate
-                  color="primary"
-                ></v-progress-circular>
-              </v-row>
+              <!-- Mostrar mensaje más bonito y explícito de cargando -->
+              <v-progress-circular
+                v-if="loading"
+                :size="40"
+                :width="4"
+                indeterminate
+                color="primary"
+                class="d-block mx-auto mt-4"
+              ></v-progress-circular>
+              <span v-if="loading" class="loading-message">
+                Calculando días hábiles, por favor espera...
+              </span>
             </v-card-text>
           </v-card>
         </v-container>
       </v-app>
     </div>
 
+    <style>
+      .loading-message {
+        font-size: 16px;
+        color: #4caf50; /* Verde SERFOR */
+        display: block;
+        text-align: center;
+        margin-top: 10px;
+      }
+    </style>
+
     <script>
       const app = Vue.createApp({
         data() {
           return {
-            startDate: "",
-            endDate: "",
+            dateRange: [],
             businessDays: "",
             loading: false,
             pyodideInstance: null,
@@ -115,7 +121,7 @@
             await pyodide.loadPackage("micropip");
             await pyodide.runPythonAsync(`
               from datetime import datetime, timedelta
-
+  
               # Definir los feriados
               feriados = [
                   "01/01/2024","02/01/2024","28/03/2024","29/03/2024","01/05/2024","29/06/2024","07/06/2024","23/07/2024","26/07/2024","28/07/2024",
@@ -124,21 +130,21 @@
                   "29/06/2023","30/06/2023","06/08/2023","23/07/2023","27/07/2023","28/07/2023","29/07/2023","30/08/2023","08/10/2023","09/10/2023",
                   "01/11/2023","07/12/2023","08/12/2023","09/12/2023","25/12/2023","26/12/2023"
               ]
-
+  
               # Convertir los feriados al formato datetime
               feriados = [datetime.strptime(date, "%d/%m/%Y") for date in feriados]
-
+  
               # Función para calcular días hábiles
               def calcular_dias_habiles(fecha_inicio, fecha_fin, feriados):
                   dias_habiles = 0
                   fecha_actual = fecha_inicio
-
+  
                   while fecha_actual <= fecha_fin:
                       # Verificar si no es fin de semana y no es feriado
                       if fecha_actual.weekday() < 5 and fecha_actual not in feriados:
                           dias_habiles += 1
                       fecha_actual += timedelta(days=1)
-
+  
                   return dias_habiles
             `);
             return pyodide;
@@ -147,11 +153,15 @@
             if (!this.pyodideInstance) return null;
 
             if (startDate && endDate) {
+              // Remove the time component from the date strings
+              const formattedStartDate = startDate.toISOString().split("T")[0];
+              const formattedEndDate = endDate.toISOString().split("T")[0];
+
               let result = await this.pyodideInstance.runPythonAsync(`
                 from datetime import datetime, timedelta
 
-                fecha_inicio = datetime.strptime("${startDate}", "%Y-%m-%d") + timedelta(days=1)
-                fecha_fin = datetime.strptime("${endDate}", "%Y-%m-%d")
+                fecha_inicio = datetime.strptime("${formattedStartDate}", "%Y-%m-%d") + timedelta(days=1)
+                fecha_fin = datetime.strptime("${formattedEndDate}", "%Y-%m-%d")
                 dias_habiles = calcular_dias_habiles(fecha_inicio, fecha_fin, feriados)
                 dias_habiles
               `);
@@ -160,12 +170,14 @@
             return null;
           },
           async handleInput() {
-            if (this.startDate && this.endDate) {
+            console.log("Date range changed:", this.dateRange);
+            // if (this.dateRange && this.dateRange.length === 2) {
+            if (this.dateRange.length > 0) {
+              const startDate = this.dateRange[0];
+              const endDate = this.dateRange[this.dateRange.length - 1];
+
               this.loading = true; // Mostrar spinner durante el cálculo
-              const result = await this.calcularDiasHabiles(
-                this.startDate,
-                this.endDate
-              );
+              const result = await this.calcularDiasHabiles(startDate, endDate);
               this.businessDays = result;
               this.loading = false; // Ocultar spinner al terminar
             }
@@ -173,7 +185,36 @@
         },
       });
 
-      app.use(Vuetify.createVuetify());
+      app.use(
+        Vuetify.createVuetify({
+          theme: {
+            themes: {
+              light: {
+                primary: "#4CAF50", // Verde SERFOR
+                secondary: "#388E3C", // Un verde oscuro complementario
+              },
+            },
+          },
+          // Añadir configuración de internacionalización
+          locale: {
+            defaultLocale: "es",
+            messages: {
+              es: {
+                dataIterator: {
+                  rowsPerPageText: "Filas por página:",
+                  pageText: "{0}-{1} de {2}",
+                  noResultsText: "No se encontraron registros que coincidan",
+                  nextPage: "Página siguiente",
+                  prevPage: "Página anterior",
+                },
+                datePicker: {
+                  itemsSelected: "{0} seleccionados",
+                },
+              },
+            },
+          },
+        })
+      );
 
       app.mount("#app");
     </script>
