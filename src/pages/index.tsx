@@ -3,8 +3,6 @@ import React, { useState, useEffect } from "react";
 import { X, Settings, Save } from "lucide-react";
 import DialogWrapper from "../components/DialogWrapper";
 
-import "./index.css";
-
 type Holiday = { date: string; name: string };
 
 const DEFAULT_HOLIDAYS: Holiday[] = [
