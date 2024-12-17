@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { Calendar, X, Settings, Save } from "lucide-react";
+import DialogWrapper from "../components/DialogWrapper";
 
 import "@radix-ui/themes/styles.css";
 import "./index.css";
@@ -291,124 +292,107 @@ const DayCalculator = () => {
           </div>
         </div>
       </div>
-      <Dialog.Root open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 grid place-items-center overflow-y-auto bg-black bg-opacity-50">
-            <Dialog.Content className="min-w-[300px] rounded-md bg-white p-8">
-              <Dialog.Title>Detalle de Días Hábiles</Dialog.Title>
-              {selectedCalculation && (
-                <div className="space-y-4">
-                  <div className="flex justify-between text-sm text-gray-500">
-                    <span>
-                      Del:{" "}
-                      {new Date(
-                        selectedCalculation.startDate + "T00:00:00",
-                      ).toLocaleDateString("es-PE")}
-                    </span>
-                    <span>
-                      Al:{" "}
-                      {new Date(
-                        selectedCalculation.endDate + "T00:00:00",
-                      ).toLocaleDateString("es-PE")}
-                    </span>
-                  </div>
-                  {selectedCalculation.includeStartDay && (
-                    <p className="text-sm text-gray-500">
-                      Incluyendo día inicial
-                    </p>
-                  )}
-                  <div className="space-y-2">
-                    {selectedCalculation.workingDays.map((date, index) => (
-                      <div key={index} className="Card">
-                        {date.toLocaleDateString("es-PE", {
-                          weekday: "long",
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
-                      </div>
-                    ))}
-                  </div>
+      <DialogWrapper
+        open={showDetailDialog}
+        onOpenChange={setShowDetailDialog}
+        title="Detalle de Días Hábiles"
+      >
+        {selectedCalculation && (
+          <div className="space-y-4">
+            <div className="flex justify-between text-sm text-gray-500">
+              <span>
+                Del:{" "}
+                {new Date(
+                  selectedCalculation.startDate + "T00:00:00",
+                ).toLocaleDateString("es-PE")}
+              </span>
+              <span>
+                Al:{" "}
+                {new Date(
+                  selectedCalculation.endDate + "T00:00:00",
+                ).toLocaleDateString("es-PE")}
+              </span>
+            </div>
+            {selectedCalculation.includeStartDay && (
+              <p className="text-sm text-gray-500">Incluyendo día inicial</p>
+            )}
+            <div className="space-y-2">
+              {selectedCalculation.workingDays.map((date, index) => (
+                <div key={index} className="Card">
+                  {date.toLocaleDateString("es-PE", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
                 </div>
-              )}
-              <Dialog.Close asChild>
-                <button className="button-outline button-sm">Cerrar</button>
-              </Dialog.Close>
-            </Dialog.Content>
-          </Dialog.Overlay>
-        </Dialog.Portal>
-      </Dialog.Root>
-      <Dialog.Root open={showConfigDialog} onOpenChange={setShowConfigDialog}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 grid place-items-center overflow-y-auto bg-black bg-opacity-50">
-            <Dialog.Content className="max-h-[80vh] min-w-[300px] overflow-auto rounded-md bg-white px-8 pb-8">
-              <div className="sticky top-0 flex items-center justify-between bg-white pb-2 pt-8">
-                <h2 className="fond-medium text-lg">Configuración</h2>
-                <Dialog.Close className="button-outline button-sm">
-                  <X className="icon" />
-                  Cerrar
-                </Dialog.Close>
+              ))}
+            </div>
+          </div>
+        )}
+      </DialogWrapper>
+      <DialogWrapper
+        open={showConfigDialog}
+        onOpenChange={setShowConfigDialog}
+        title="Configuración"
+      >
+        <div className="mt-4 border-b pb-4">
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="useLocalStorage"
+              checked={useLocalStorage}
+              onChange={(e) => handleStorageToggle(e.target.checked)}
+              className="form-checkbox"
+            />
+            <label
+              htmlFor="useLocalStorage"
+              className="flex items-center gap-1 text-sm font-medium leading-none"
+            >
+              <Save className="h-4 w-4" />
+              Guardar preferencias
+            </label>
+          </div>
+        </div>
+        <div>
+          <h3 className="mt-2 font-medium">Feriados</h3>
+          <div className="">
+            <div className="bg-white py-2">
+              <div className="flex gap-2">
+                <input
+                  type="date"
+                  value={newHoliday}
+                  onChange={(e) => setNewHoliday(e.target.value)}
+                  className="flex-1 rounded-md border px-3 py-2"
+                />
+                <button className="button-primary" onClick={addHoliday}>
+                  Agregar
+                </button>
               </div>
-              <div className="mt-4 border-b pb-4">
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="useLocalStorage"
-                    checked={useLocalStorage}
-                    onChange={(e) => handleStorageToggle(e.target.checked)}
-                    className="form-checkbox"
-                  />
-                  <label
-                    htmlFor="useLocalStorage"
-                    className="flex items-center gap-1 text-sm font-medium leading-none"
+            </div>
+            <div className="mt-2 space-y-2">
+              {holidays.sort().map((holiday) => (
+                <div
+                  key={holiday}
+                  className="flex items-center justify-between rounded bg-gray-50 p-2"
+                >
+                  <span>
+                    {new Date(holiday + "T00:00:00").toLocaleDateString(
+                      "es-PE",
+                    )}
+                  </span>
+                  <button
+                    className="button-destructive button-sm"
+                    onClick={() => removeHoliday(holiday)}
                   >
-                    <Save className="h-4 w-4" />
-                    Guardar preferencias
-                  </label>
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
-              </div>
-              <div>
-                <h3 className="mt-2 font-medium">Feriados</h3>
-                <div className="">
-                  <div className="bg-white py-2">
-                    <div className="flex gap-2">
-                      <input
-                        type="date"
-                        value={newHoliday}
-                        onChange={(e) => setNewHoliday(e.target.value)}
-                        className="flex-1 rounded-md border px-3 py-2"
-                      />
-                      <button className="button-primary" onClick={addHoliday}>
-                        Agregar
-                      </button>
-                    </div>
-                  </div>
-                  <div className="mt-2 space-y-2">
-                    {holidays.sort().map((holiday) => (
-                      <div
-                        key={holiday}
-                        className="flex items-center justify-between rounded bg-gray-50 p-2"
-                      >
-                        <span>
-                          {new Date(holiday + "T00:00:00").toLocaleDateString(
-                            "es-PE",
-                          )}
-                        </span>
-                        <button
-                          className="button-destructive button-sm"
-                          onClick={() => removeHoliday(holiday)}
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </Dialog.Content>
-          </Dialog.Overlay>
-        </Dialog.Portal>
-      </Dialog.Root>
+              ))}
+            </div>
+          </div>
+        </div>
+      </DialogWrapper>
     </div>
   );
 };
