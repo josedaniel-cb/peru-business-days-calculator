@@ -5,7 +5,128 @@ import DialogWrapper from "../components/DialogWrapper";
 
 import "./index.css";
 
-const DEFAULT_HOLIDAYS: string[] = ["2024-01-01", "2024-04-18", "2024-04-19"];
+type Holiday = { date: string; name: string };
+
+const DEFAULT_HOLIDAYS: Holiday[] = [
+  // 2020
+  { date: "2020-01-01", name: "Año Nuevo" },
+  { date: "2020-04-09", name: "Jueves Santo" },
+  { date: "2020-04-10", name: "Viernes Santo" },
+  { date: "2020-05-01", name: "Día del Trabajador" },
+  { date: "2020-06-24", name: "Día no laborable decretado por el Gobierno" },
+  { date: "2020-06-29", name: "Día de San Pedro y San Pablo" },
+  { date: "2020-07-28", name: "Fiestas Patrias" },
+  { date: "2020-10-08", name: "Día del Combate de Angamos" },
+  { date: "2020-10-09", name: "Día no laborable decretado por el Gobierno" },
+  { date: "2020-12-08", name: "Día de la Inmaculada Concepción" },
+  { date: "2020-12-25", name: "Navidad" },
+  { date: "2020-12-31", name: "Día no laborable decretado por el Gobierno" },
+
+  // 2021
+  { date: "2021-01-01", name: "Año Nuevo" },
+  { date: "2021-04-01", name: "Jueves Santo" },
+  { date: "2021-04-02", name: "Viernes Santo" },
+  { date: "2021-05-01", name: "Día del Trabajo" },
+  { date: "2021-06-29", name: "Día de San Pedro y San Pablo" },
+  { date: "2021-07-28", name: "Fiestas Patrias" },
+  { date: "2021-07-29", name: "Fiestas Patrias" },
+  { date: "2021-08-30", name: "Santa Rosa de Lima" },
+  { date: "2021-10-08", name: "Combate de Angamos" },
+  { date: "2021-10-11", name: "Día no laborable (sector público)" },
+  { date: "2021-11-01", name: "Día de Todos los Santos" },
+  { date: "2021-11-02", name: "Día no laborable (sector público)" },
+  { date: "2021-12-08", name: "Día de la Inmaculada Concepción" },
+  { date: "2021-12-24", name: "Día no laborable (sector público)" },
+  { date: "2021-12-25", name: "Navidad" },
+  { date: "2021-12-27", name: "Día no laborable (sector público)" },
+  { date: "2021-12-31", name: "Vísperas de Año Nuevo" },
+
+  // 2022
+  { date: "2022-01-01", name: "Año Nuevo" },
+  { date: "2022-01-03", name: "Día no laborable (sector público)" },
+  { date: "2022-04-14", name: "Jueves Santo" },
+  { date: "2022-04-15", name: "Viernes Santo" },
+  { date: "2022-05-01", name: "Día del Trabajo" },
+  { date: "2022-05-02", name: "Día no laborable (sector público)" },
+  { date: "2022-06-13", name: "Día no laborable (sector público)" },
+  { date: "2022-06-24", name: "Día no laborable (sector público)" },
+  { date: "2022-06-29", name: "Día de San Pedro y San Pablo" },
+  { date: "2022-07-28", name: "Fiestas Patrias" },
+  { date: "2022-07-29", name: "Fiestas Patrias" },
+  { date: "2022-08-06", name: "Batalla de Junín" },
+  { date: "2022-08-30", name: "Santa Rosa de Lima" },
+  { date: "2022-08-29", name: "Día no laborable (sector público)" },
+  { date: "2022-10-07", name: "Día no laborable (sector público)" },
+  { date: "2022-10-08", name: "Combate de Angamos" },
+  { date: "2022-10-31", name: "Día no laborable (sector público)" },
+  { date: "2022-11-01", name: "Día de Todos los Santos" },
+  { date: "2022-12-08", name: "Día de la Inmaculada Concepción" },
+  { date: "2022-12-09", name: "Batalla de Ayacucho" },
+  { date: "2022-12-26", name: "Día no laborable (sector público)" },
+  { date: "2022-12-30", name: "Día no laborable (sector público)" },
+  { date: "2022-12-25", name: "Navidad" },
+
+  //  2023
+  { date: "2023-01-01", name: "Año Nuevo" },
+  { date: "2023-01-02", name: "Día no laborable (sector público)" },
+  { date: "2023-04-06", name: "Jueves Santo" },
+  { date: "2023-04-07", name: "Viernes Santo" },
+  { date: "2023-04-28", name: "Día no laborable (sector público)" },
+  { date: "2023-05-01", name: "Día del Trabajo" },
+  { date: "2023-06-29", name: "Día de San Pedro y San Pablo" },
+  { date: "2023-06-30", name: "Día no laborable (sector público)" },
+  { date: "2023-07-23", name: "Día de la Fuerza Aérea del Perú" },
+  { date: "2023-07-27", name: "Día no laborable (sector público)" },
+  { date: "2023-07-28", name: "Fiestas Patrias" },
+  { date: "2023-07-29", name: "Fiestas Patrias" },
+  { date: "2023-08-06", name: "Batalla de Junín" },
+  { date: "2023-08-30", name: "Santa Rosa de Lima" },
+  { date: "2023-10-08", name: "Combate de Angamos" },
+  { date: "2023-10-09", name: "Día no laborable (sector público)" },
+  { date: "2023-11-01", name: "Día de Todos los Santos" },
+  { date: "2023-12-07", name: "Día no laborable (sector público)" },
+  { date: "2023-12-08", name: "Día de la Inmaculada Concepción" },
+  { date: "2023-12-09", name: "Batalla de Ayacucho" },
+  { date: "2023-12-25", name: "Navidad" },
+  { date: "2023-12-26", name: "Día no laborable (sector público)" },
+
+  //  2024
+  { date: "2024-01-01", name: "Año Nuevo" },
+  { date: "2024-01-02", name: "Día no laborable para el sector público" },
+  { date: "2024-03-28", name: "Jueves Santo" },
+  { date: "2024-03-29", name: "Viernes Santo" },
+  { date: "2024-05-01", name: "Día del Trabajo" },
+  { date: "2024-06-07", name: "Batalla de Arica y Día de la Bandera" },
+  { date: "2024-06-29", name: "Día de San Pedro y San Pablo" },
+  { date: "2024-07-23", name: "Día de la Fuerza Aérea del Perú" },
+  { date: "2024-07-26", name: "Día no laborable para el sector público" },
+  { date: "2024-07-28", name: "Día de la Independencia" },
+  { date: "2024-07-29", name: "Fiestas Patrias" },
+  { date: "2024-08-06", name: "Batalla de Junín" },
+  { date: "2024-08-30", name: "Santa Rosa de Lima" },
+  { date: "2024-10-07", name: "Día no laborable para el sector público" },
+  { date: "2024-10-08", name: "Combate de Angamos" },
+  {
+    date: "2024-11-14",
+    name: "Día no laborable para el sector público y privado en Lima Metropolitana y Callao",
+  },
+  {
+    date: "2024-11-15",
+    name: "Día no laborable para el sector público y privado en Lima Metropolitana y Callao",
+  },
+  {
+    date: "2024-11-16",
+    name: "Día no laborable para el sector público y privado en Lima Metropolitana y Callao",
+  },
+  { date: "2024-12-06", name: "Día no laborable para el sector público" },
+  { date: "2024-12-08", name: "Inmaculada Concepción" },
+  { date: "2024-12-09", name: "Batalla de Ayacucho" },
+  { date: "2024-12-23", name: "Día no laborable para el sector público" },
+  { date: "2024-12-24", name: "Día no laborable para el sector público" },
+  { date: "2024-12-25", name: "Navidad" },
+  { date: "2024-12-30", name: "Día no laborable para el sector público" },
+  { date: "2024-12-31", name: "Día no laborable para el sector público" },
+];
 
 type Calculation = {
   id: number;
@@ -13,6 +134,7 @@ type Calculation = {
   endDate: string;
   totalDays: number;
   workingDays: Date[];
+  holidays: Holiday[];
   includeStartDay: boolean;
 };
 
@@ -20,9 +142,12 @@ const DayCalculator = () => {
   // Estados principales
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
-  const [holidays, setHolidays] = useState<string[]>(DEFAULT_HOLIDAYS);
+  const [holidays, setHolidays] = useState<Holiday[]>(DEFAULT_HOLIDAYS);
   const [calculations, setCalculations] = useState<Array<Calculation>>([]);
-  const [newHoliday, setNewHoliday] = useState<string>("");
+  const [newHoliday, setNewHoliday] = useState<Holiday>({
+    date: "",
+    name: "",
+  });
   const [selectedCalculation, setSelectedCalculation] =
     useState<Calculation | null>(null);
 
@@ -99,6 +224,15 @@ const DayCalculator = () => {
     }
   };
 
+  const resetSettingsAndStorage = () => {
+    localStorage.removeItem("holidays");
+    localStorage.removeItem("calculations");
+    localStorage.removeItem("preferences");
+    setHolidays(DEFAULT_HOLIDAYS);
+    setCalculations([]);
+    setIncludeStartDay(false);
+  };
+
   const isWeekend = (date: Date) => {
     const day = date.getDay();
     return day === 0 || day === 6;
@@ -106,7 +240,7 @@ const DayCalculator = () => {
 
   const isHoliday = (date: Date) => {
     const dateString = date.toISOString().split("T")[0];
-    return holidays.includes(dateString);
+    return holidays.map((v) => v.date).includes(dateString);
   };
 
   const calculateWorkingDays = () => {
@@ -125,6 +259,7 @@ const DayCalculator = () => {
     }
 
     const workingDaysArray = [];
+    const holidaysArray: Holiday[] = [];
     const current = new Date(start);
 
     // Si no se incluye el día inicial, comenzar desde el siguiente día
@@ -133,8 +268,16 @@ const DayCalculator = () => {
     }
 
     while (current <= end) {
-      if (!isWeekend(current) && !isHoliday(current)) {
-        workingDaysArray.push(new Date(current));
+      if (!isWeekend(current)) {
+        if (isHoliday(current)) {
+          holidaysArray.push(
+            holidays.find(
+              (v) => v.date === current.toISOString().split("T")[0],
+            )!,
+          );
+        } else {
+          workingDaysArray.push(new Date(current));
+        }
       }
       current.setDate(current.getDate() + 1);
     }
@@ -145,6 +288,7 @@ const DayCalculator = () => {
       endDate,
       totalDays: workingDaysArray.length,
       workingDays: workingDaysArray,
+      holidays: holidaysArray,
       includeStartDay,
     };
 
@@ -154,14 +298,20 @@ const DayCalculator = () => {
   };
 
   const addHoliday = () => {
-    if (newHoliday && !holidays.includes(newHoliday)) {
+    if (
+      newHoliday &&
+      holidays.findIndex((v) => v.date === newHoliday.date) === -1
+    ) {
       setHolidays([...holidays, newHoliday]);
-      setNewHoliday("");
+      setNewHoliday({
+        date: "",
+        name: "",
+      });
     }
   };
 
   const removeHoliday = (holiday: string) => {
-    setHolidays(holidays.filter((h) => h !== holiday));
+    setHolidays(holidays.filter((h) => h.date !== holiday));
   };
 
   const removeCalculation = (id: number) => {
@@ -290,7 +440,7 @@ const DayCalculator = () => {
       <DialogWrapper
         open={showDetailDialog}
         onOpenChange={setShowDetailDialog}
-        title="Detalle de Días Hábiles"
+        title="Detalle de feriados"
       >
         {selectedCalculation && (
           <div className="space-y-4">
@@ -312,14 +462,20 @@ const DayCalculator = () => {
               <p className="text-sm text-gray-500">Incluyendo día inicial</p>
             )}
             <div className="space-y-2">
-              {selectedCalculation.workingDays.map((date, index) => (
+              {selectedCalculation.holidays.map((holiday, index) => (
                 <div key={index} className="Card">
-                  {date.toLocaleDateString("es-PE", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
+                  <div className="font-bold">
+                    {new Date(holiday.date + "T00:00:00").toLocaleDateString(
+                      "es-PE",
+                      {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      },
+                    )}
+                  </div>
+                  <div>{holiday.name}</div>
                 </div>
               ))}
             </div>
@@ -348,6 +504,13 @@ const DayCalculator = () => {
               Guardar preferencias
             </label>
           </div>
+          {/* reset settings button */}
+          <button
+            className="button-destructive button-sm mt-2"
+            onClick={() => resetSettingsAndStorage()}
+          >
+            Restablecer preferencias
+          </button>
         </div>
         <div>
           <h3 className="mt-2 font-medium">Feriados</h3>
@@ -356,8 +519,15 @@ const DayCalculator = () => {
               <div className="flex gap-2">
                 <input
                   type="date"
-                  value={newHoliday}
-                  onChange={(e) => setNewHoliday(e.target.value)}
+                  value={newHoliday?.date}
+                  onChange={(e) =>
+                    setNewHoliday({
+                      date: new Date(e.target.value)
+                        .toISOString()
+                        .split("T")[0],
+                      name: "",
+                    })
+                  }
                   className="flex-1 rounded-md border px-3 py-2"
                 />
                 <button className="button-primary" onClick={addHoliday}>
@@ -368,17 +538,20 @@ const DayCalculator = () => {
             <div className="mt-2 space-y-2">
               {holidays.sort().map((holiday) => (
                 <div
-                  key={holiday}
+                  key={holiday.date}
                   className="flex items-center justify-between rounded bg-gray-50 p-2"
                 >
-                  <span>
-                    {new Date(holiday + "T00:00:00").toLocaleDateString(
-                      "es-PE",
-                    )}
-                  </span>
+                  <div>
+                    <div className="font-bold">
+                      {new Date(holiday.date + "T00:00:00").toLocaleDateString(
+                        "es-PE",
+                      )}
+                    </div>
+                    <div>{holiday.name}</div>
+                  </div>
                   <button
                     className="button-destructive button-sm"
-                    onClick={() => removeHoliday(holiday)}
+                    onClick={() => removeHoliday(holiday.date)}
                   >
                     <X className="h-4 w-4" />
                   </button>
