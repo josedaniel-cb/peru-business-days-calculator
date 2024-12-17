@@ -5,20 +5,7 @@ import DialogWrapper from "../components/DialogWrapper";
 
 import "./index.css";
 
-const DEFAULT_HOLIDAYS = [
-  "2024-01-01",
-  "2024-04-18",
-  "2024-04-19",
-  "2024-05-01",
-  "2024-06-29",
-  "2024-07-28",
-  "2024-07-29",
-  "2024-08-30",
-  "2024-10-08",
-  "2024-11-01",
-  "2024-12-08",
-  "2024-12-25",
-];
+const DEFAULT_HOLIDAYS: string[] = ["2024-01-01", "2024-04-18", "2024-04-19"];
 
 type Calculation = {
   id: number;
@@ -46,15 +33,18 @@ const DayCalculator = () => {
   // Preferencias de usuario
   const [includeStartDay, setIncludeStartDay] = useState<boolean>(false);
   const [useLocalStorage, setUseLocalStorage] = useState<boolean>(() => {
-    const savedPreferences = localStorage.getItem("preferences");
-    return savedPreferences
-      ? JSON.parse(savedPreferences).useLocalStorage
-      : false;
+    if (typeof window !== "undefined") {
+      const savedPreferences = localStorage.getItem("preferences");
+      return savedPreferences
+        ? JSON.parse(savedPreferences).useLocalStorage
+        : false;
+    }
+    return false;
   });
 
   // Cargar datos desde localStorage solo si está activado
   useEffect(() => {
-    if (useLocalStorage) {
+    if (typeof window !== "undefined" && useLocalStorage) {
       try {
         const loadedHolidays = JSON.parse(
           localStorage.getItem("holidays") || "[]",
@@ -83,7 +73,7 @@ const DayCalculator = () => {
 
   // Guardar datos en localStorage solo si está activado
   useEffect(() => {
-    if (useLocalStorage) {
+    if (typeof window !== "undefined" && useLocalStorage) {
       try {
         localStorage.setItem("holidays", JSON.stringify(holidays));
         localStorage.setItem("calculations", JSON.stringify(calculations));
@@ -118,12 +108,6 @@ const DayCalculator = () => {
     const dateString = date.toISOString().split("T")[0];
     return holidays.includes(dateString);
   };
-
-  // const addDays = (date: Date, days: number) => {
-  //   const result = new Date(date);
-  //   result.setDate(result.getDate() + days);
-  //   return result;
-  // };
 
   const calculateWorkingDays = () => {
     if (!startDate || !endDate) {
