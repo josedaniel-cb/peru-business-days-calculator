@@ -1,25 +1,23 @@
 import React, { useState, useEffect } from "react";
 
-import * as Dialog from "@radix-ui/react-dialog";
-import { Calendar, X, Settings, Save } from "lucide-react";
+import { X, Settings, Save } from "lucide-react";
 import DialogWrapper from "../components/DialogWrapper";
 
-import "@radix-ui/themes/styles.css";
 import "./index.css";
 
 const DEFAULT_HOLIDAYS = [
-  "2024-01-01", // Año Nuevo
-  "2024-04-18", // Jueves Santo
-  "2024-04-19", // Viernes Santo
-  "2024-05-01", // Día del Trabajo
-  "2024-06-29", // San Pedro y San Pablo
-  "2024-07-28", // Fiestas Patrias
-  "2024-07-29", // Fiestas Patrias
-  "2024-08-30", // Santa Rosa de Lima
-  "2024-10-08", // Combate de Angamos
-  "2024-11-01", // Todos los Santos
-  "2024-12-08", // Inmaculada Concepción
-  "2024-12-25", // Navidad
+  "2024-01-01",
+  "2024-04-18",
+  "2024-04-19",
+  "2024-05-01",
+  "2024-06-29",
+  "2024-07-28",
+  "2024-07-29",
+  "2024-08-30",
+  "2024-10-08",
+  "2024-11-01",
+  "2024-12-08",
+  "2024-12-25",
 ];
 
 type Calculation = {
@@ -47,24 +45,35 @@ const DayCalculator = () => {
 
   // Preferencias de usuario
   const [includeStartDay, setIncludeStartDay] = useState<boolean>(false);
-  const [useLocalStorage, setUseLocalStorage] = useState<boolean>(false);
+  const [useLocalStorage, setUseLocalStorage] = useState<boolean>(() => {
+    const savedPreferences = localStorage.getItem("preferences");
+    return savedPreferences
+      ? JSON.parse(savedPreferences).useLocalStorage
+      : false;
+  });
+
   // Cargar datos desde localStorage solo si está activado
   useEffect(() => {
     if (useLocalStorage) {
       try {
-        const loadedHolidays = JSON.parse(localStorage.getItem("holidays")!);
+        const loadedHolidays = JSON.parse(
+          localStorage.getItem("holidays") || "[]",
+        );
         const loadedCalculations = JSON.parse(
-          localStorage.getItem("calculations")!,
+          localStorage.getItem("calculations") || "[]",
         );
         const loadedPreferences = JSON.parse(
-          localStorage.getItem("preferences")!,
+          localStorage.getItem("preferences") || "{}",
         );
 
-        if (loadedHolidays) setHolidays(loadedHolidays);
-        if (loadedCalculations) setCalculations(loadedCalculations);
+        setHolidays(
+          Array.isArray(loadedHolidays) ? loadedHolidays : DEFAULT_HOLIDAYS,
+        );
+        setCalculations(
+          Array.isArray(loadedCalculations) ? loadedCalculations : [],
+        );
         if (loadedPreferences) {
-          setIncludeStartDay(loadedPreferences.includeStartDay);
-          setUseLocalStorage(true);
+          setIncludeStartDay(loadedPreferences.includeStartDay || false);
         }
       } catch (error) {
         console.warn("Error loading from localStorage:", error);
@@ -80,22 +89,23 @@ const DayCalculator = () => {
         localStorage.setItem("calculations", JSON.stringify(calculations));
         localStorage.setItem(
           "preferences",
-          JSON.stringify({
-            includeStartDay,
-            useLocalStorage,
-          }),
+          JSON.stringify({ includeStartDay, useLocalStorage }),
         );
       } catch (error) {
         console.warn("Error saving to localStorage:", error);
       }
     }
-  }, [holidays, calculations, includeStartDay, useLocalStorage]);
+  }, [useLocalStorage, holidays, calculations, includeStartDay]);
 
   const handleStorageToggle = (checked: boolean) => {
     setUseLocalStorage(checked);
     if (!checked) {
+      localStorage.removeItem("holidays");
+      localStorage.removeItem("calculations");
+      localStorage.removeItem("preferences");
       setHolidays(DEFAULT_HOLIDAYS);
       setCalculations([]);
+      setIncludeStartDay(false);
     }
   };
 
@@ -180,7 +190,7 @@ const DayCalculator = () => {
   };
 
   return (
-    <div className="w-full max-w-4xl space-y-8">
+    <div className="container mx-auto space-y-8 px-16 py-8">
       <div className="card">
         <div className="card-header">
           <h2 className="card-title">Calculadora de Días Hábiles en Perú</h2>
@@ -272,7 +282,7 @@ const DayCalculator = () => {
                       </p>
                     )}
                   </div>
-                  <div className="space-x-2">
+                  <div className="flex gap-2">
                     <button
                       className="button-outline button-sm"
                       onClick={() => showDetail(calc)}
@@ -283,7 +293,8 @@ const DayCalculator = () => {
                       className="button-destructive button-sm"
                       onClick={() => removeCalculation(calc.id)}
                     >
-                      <X className="icon" />
+                      <X className="icon mr-0" />
+                      Quitar
                     </button>
                   </div>
                 </div>
